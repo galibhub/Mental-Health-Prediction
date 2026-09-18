@@ -1,96 +1,121 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 
+const navItems = [
+  {
+    label: "Home",
+    to: "/",
+  },
+  {
+    label: "Assessment",
+    to: "/assessment",
+  },
+];
+
 function LogoMark() {
   return (
-    <div className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-2xl bg-pine-deep shadow-soft">
-      <div className="absolute inset-[7px] rounded-xl border border-mint/35" />
+    <div className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-2xl bg-pine text-white shadow-soft">
+      <div className="absolute inset-0 bg-gradient-to-br from-pine via-pine to-[#8a80ff]" />
 
       <svg
         viewBox="0 0 24 24"
-        className="relative h-5 w-5 text-mint"
+        className="relative h-5 w-5"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.7"
         strokeLinecap="round"
         strokeLinejoin="round"
-        aria-hidden="true"
       >
         <path d="M12 20V10" />
-        <path d="M12 13C8.8 13 7 11.3 7 8.5C7 7 8.2 6 9.7 6c1.2 0 2.1.6 2.3 1.7" />
-        <path d="M12 15c3.2 0 5-1.7 5-4.5C17 9 15.8 8 14.3 8c-1.2 0-2.1.6-2.3 1.7" />
+        <path d="M12 12.5C8.8 12.5 7 10.8 7 8.1C7 6.6 8.2 5.5 9.7 5.5c1.2 0 2.1.6 2.3 1.7" />
+        <path d="M12 14.5c3.2 0 5-1.7 5-4.4C17 8.6 15.8 7.5 14.3 7.5c-1.2 0-2.1.6-2.3 1.7" />
         <path d="M9 20h6" />
       </svg>
     </div>
   );
 }
 
-function navClass({ isActive }) {
-  return [
-    "relative rounded-xl px-3 py-2 text-sm font-medium transition-all duration-300",
-    isActive
-      ? "bg-pine-soft text-pine-deep"
-      : "text-ink-soft hover:bg-white/70 hover:text-ink",
-  ].join(" ");
-}
-
 function Navbar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const closeMobile = () => {
-    setMobileOpen(false);
-  };
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line/70 bg-ivory/80 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="flex h-[76px] items-center justify-between">
-          {/* Brand */}
+    <header className="sticky top-0 z-50">
+      {/* subtle glass backdrop */}
+      <div className="absolute inset-0 border-b border-line/70 bg-ivory/80 backdrop-blur-xl" />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <nav className="flex h-[76px] items-center justify-between">
+          {/* ===================================================
+              BRAND
+          =================================================== */}
           <Link
             to="/"
-            onClick={closeMobile}
+            onClick={() => setMenuOpen(false)}
             className="group flex items-center gap-3"
           >
             <LogoMark />
 
-            <div className="leading-none">
-              <p className="font-display text-[21px] font-medium tracking-tight text-pine-deep">
+            <div className="hidden sm:block">
+              <p className="font-display text-xl leading-none text-pine-deep">
                 Mental Health
+                <span className="italic text-pine">
+                  {" "}
+                  Signal
+                </span>
               </p>
 
-              <p className="mt-1 font-mono text-[9px] font-semibold uppercase tracking-[0.22em] text-pine">
-                Signal
+              <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.18em] text-ink-muted">
+                Student wellness analytics
+              </p>
+            </div>
+
+            <div className="sm:hidden">
+              <p className="font-display text-lg leading-none text-pine-deep">
+                MHS
               </p>
             </div>
           </Link>
 
-          {/* Desktop navigation */}
-          <nav
-            className="hidden items-center gap-1 md:flex"
-            aria-label="Primary navigation"
-          >
-            <NavLink to="/" end className={navClass}>
-              Home
-            </NavLink>
+          {/* ===================================================
+              DESKTOP NAV
+          =================================================== */}
+          <div className="hidden items-center gap-2 md:flex">
+            <div className="flex items-center gap-1 rounded-2xl border border-line bg-white/70 p-1.5 shadow-sm">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === "/"}
+                  className={({ isActive }) =>
+                    [
+                      "rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300",
+                      isActive
+                        ? "bg-pine-soft text-pine-deep shadow-sm"
+                        : "text-ink-soft hover:bg-paper hover:text-ink",
+                    ].join(" ")
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
 
-            <NavLink to="/assessment" className={navClass}>
-              Assessment
-            </NavLink>
+            {/* status */}
+            <div className="ml-3 hidden items-center gap-2 rounded-full border border-line bg-white/70 px-3.5 py-2 lg:flex">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pine opacity-40" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-pine" />
+              </span>
 
-            <NavLink to="/result" className={navClass}>
-              Result
-            </NavLink>
-          </nav>
+              <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-ink-muted">
+                Model online
+              </span>
+            </div>
 
-          {/* Right action */}
-          <div className="hidden items-center gap-3 md:flex">
-            <span className="hidden rounded-full border border-line bg-white/60 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted lg:inline-flex">
-              ML Screening
-            </span>
-
+            {/* CTA */}
             <Link
               to="/assessment"
-              className="group inline-flex items-center gap-2 rounded-xl bg-pine px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:bg-pine-deep hover:shadow-card"
+              className="group ml-2 inline-flex items-center gap-2 rounded-2xl bg-pine px-5 py-3 text-sm font-semibold text-white shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:bg-pine-deep hover:shadow-card"
             >
               Start assessment
 
@@ -102,7 +127,6 @@ function Navbar() {
                 strokeWidth="1.8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                aria-hidden="true"
               >
                 <path d="M4 10h11" />
                 <path d="m11 6 4 4-4 4" />
@@ -110,15 +134,19 @@ function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile menu button */}
+          {/* ===================================================
+              MOBILE TOGGLE
+          =================================================== */}
           <button
             type="button"
-            onClick={() => setMobileOpen((open) => !open)}
-            className="grid h-10 w-10 place-items-center rounded-xl border border-line bg-white/70 text-ink transition hover:bg-white md:hidden"
-            aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
-            aria-expanded={mobileOpen}
+            aria-label={
+              menuOpen ? "Close navigation" : "Open navigation"
+            }
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((current) => !current)}
+            className="grid h-11 w-11 place-items-center rounded-2xl border border-line bg-white text-ink transition hover:bg-paper md:hidden"
           >
-            {mobileOpen ? (
+            {menuOpen ? (
               <svg
                 viewBox="0 0 24 24"
                 className="h-5 w-5"
@@ -145,47 +173,75 @@ function Navbar() {
               </svg>
             )}
           </button>
-        </div>
+        </nav>
 
-        {/* Mobile navigation */}
+        {/* =====================================================
+            MOBILE MENU
+        ===================================================== */}
         <div
           className={[
             "overflow-hidden transition-all duration-300 md:hidden",
-            mobileOpen ? "max-h-80 pb-5 opacity-100" : "max-h-0 opacity-0",
+            menuOpen
+              ? "max-h-96 pb-4 opacity-100"
+              : "max-h-0 opacity-0",
           ].join(" ")}
         >
-          <nav
-            className="flex flex-col gap-1 border-t border-line/60 pt-4"
-            aria-label="Mobile navigation"
-          >
-            <NavLink to="/" end className={navClass} onClick={closeMobile}>
-              Home
-            </NavLink>
+          <div className="rounded-3xl border border-line bg-white p-3 shadow-card">
+            <div className="space-y-1">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === "/"}
+                  onClick={() => setMenuOpen(false)}
+                  className={({ isActive }) =>
+                    [
+                      "block rounded-2xl px-4 py-3.5 text-sm font-semibold transition",
+                      isActive
+                        ? "bg-pine-soft text-pine-deep"
+                        : "text-ink-soft hover:bg-paper hover:text-ink",
+                    ].join(" ")
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
 
-            <NavLink
-              to="/assessment"
-              className={navClass}
-              onClick={closeMobile}
-            >
-              Assessment
-            </NavLink>
+            <div className="my-3 h-px bg-line" />
 
-            <NavLink
-              to="/result"
-              className={navClass}
-              onClick={closeMobile}
-            >
-              Result
-            </NavLink>
+            <div className="flex items-center gap-2 rounded-2xl bg-mint-soft px-4 py-3">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pine opacity-40" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-pine" />
+              </span>
+
+              <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-ink-muted">
+                Prediction model online
+              </span>
+            </div>
 
             <Link
               to="/assessment"
-              onClick={closeMobile}
-              className="mt-2 inline-flex items-center justify-center rounded-xl bg-pine px-4 py-3 text-sm font-semibold text-white transition hover:bg-pine-deep"
+              onClick={() => setMenuOpen(false)}
+              className="mt-3 flex items-center justify-center gap-2 rounded-2xl bg-pine px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-pine-deep"
             >
               Start assessment
+
+              <svg
+                viewBox="0 0 20 20"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 10h11" />
+                <path d="m11 6 4 4-4 4" />
+              </svg>
             </Link>
-          </nav>
+          </div>
         </div>
       </div>
     </header>

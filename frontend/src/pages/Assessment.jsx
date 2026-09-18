@@ -1,44 +1,17 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-
-const STEPS = [
-  {
-    id: 1,
-    eyebrow: "01",
-    title: "Personal",
-    description: "A little context about you.",
-  },
-  {
-    id: 2,
-    eyebrow: "02",
-    title: "Digital habits",
-    description: "How technology fits into your day.",
-  },
-  {
-    id: 3,
-    eyebrow: "03",
-    title: "Lifestyle & stress",
-    description: "Your everyday rhythm.",
-  },
-  {
-    id: 4,
-    eyebrow: "04",
-    title: "Review",
-    description: "Check everything before submitting.",
-  },
-];
+import { useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../services/api";
+import { getSignal } from "../utils/signal";
 
 const INITIAL_DATA = {
   age: "",
   gender: "",
   country: "",
   academic_level: "",
-
   most_used_platform: "",
   purpose_of_use: "",
   avg_daily_usage_hours: "",
   daily_unlocks: "",
-
   study_hours: "",
   physical_activity_hours: "",
   sleep_hours_per_night: "",
@@ -89,25 +62,23 @@ const ACADEMIC_LEVELS = [
 const STRESS_LEVELS = [
   {
     value: "Low",
-    label: "Low",
     description: "Mostly calm",
   },
   {
     value: "Medium",
-    label: "Medium",
     description: "Some pressure",
   },
   {
     value: "High",
-    label: "High",
     description: "Often stressed",
   },
   {
     value: "Very High",
-    label: "Very high",
     description: "Significant pressure",
   },
 ];
+
+const GAUGE_LENGTH = Math.PI * 100;
 
 function FieldLabel({ children, hint }) {
   return (
@@ -145,71 +116,99 @@ function TextInput({
       max={max}
       step={step}
       list={list}
-      className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-sm text-ink outline-none transition-all duration-300 placeholder:text-ink-muted/70 focus:border-pine/40 focus:bg-white focus:ring-4 focus:ring-pine/10"
+      className="w-full rounded-2xl border border-line bg-paper px-4 py-3.5 text-sm text-ink outline-none transition-all duration-300 placeholder:text-ink-muted/70 hover:border-pine/20 focus:border-pine/40 focus:bg-white focus:ring-4 focus:ring-pine/10"
     />
   );
 }
 
-function SelectInput({ value, onChange, placeholder, options }) {
+function SelectInput({
+  value,
+  onChange,
+  placeholder,
+  options,
+}) {
   return (
-    <select
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className="w-full appearance-none rounded-2xl border border-line bg-paper px-4 py-3.5 text-sm text-ink outline-none transition-all duration-300 focus:border-pine/40 focus:bg-white focus:ring-4 focus:ring-pine/10"
-    >
-      <option value="" disabled>
-        {placeholder}
-      </option>
-
-      {options.map((option) => (
-        <option key={option} value={option}>
-          {option}
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full appearance-none rounded-2xl border border-line bg-paper px-4 py-3.5 pr-11 text-sm text-ink outline-none transition-all duration-300 hover:border-pine/20 focus:border-pine/40 focus:bg-white focus:ring-4 focus:ring-pine/10"
+      >
+        <option value="" disabled>
+          {placeholder}
         </option>
-      ))}
-    </select>
+
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+
+      <svg
+        viewBox="0 0 20 20"
+        className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="m5 7 5 5 5-5" />
+      </svg>
+    </div>
   );
 }
 
-function ChoiceButton({
+function StressButton({
+  option,
   selected,
   onClick,
-  title,
-  description,
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={[
-        "w-full rounded-2xl border p-4 text-left transition-all duration-300",
+        "rounded-2xl border p-4 text-left transition-all duration-300",
         selected
-          ? "border-pine bg-pine-soft shadow-soft"
-          : "border-line bg-paper hover:-translate-y-0.5 hover:border-pine/25 hover:bg-white",
+          ? "border-pine bg-pine text-white shadow-soft"
+          : "border-line bg-paper text-ink hover:-translate-y-0.5 hover:border-pine/20 hover:bg-white",
       ].join(" ")}
     >
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-ink">{title}</p>
+          <p
+            className={[
+              "text-sm font-semibold",
+              selected ? "text-white" : "text-ink",
+            ].join(" ")}
+          >
+            {option.value}
+          </p>
 
-          {description && (
-            <p className="mt-1 text-xs leading-5 text-ink-muted">
-              {description}
-            </p>
-          )}
+          <p
+            className={[
+              "mt-1 text-xs",
+              selected ? "text-white/70" : "text-ink-muted",
+            ].join(" ")}
+          >
+            {option.description}
+          </p>
         </div>
 
         <span
           className={[
-            "grid h-5 w-5 shrink-0 place-items-center rounded-full border transition",
+            "grid h-5 w-5 shrink-0 place-items-center rounded-full border",
             selected
-              ? "border-pine bg-pine text-white"
+              ? "border-white/50 bg-white/15"
               : "border-line bg-white",
           ].join(" ")}
         >
           {selected && (
             <svg
               viewBox="0 0 20 20"
-              className="h-3 w-3"
+              className="h-3 w-3 text-white"
               fill="none"
               stroke="currentColor"
               strokeWidth="2.4"
@@ -225,64 +224,104 @@ function ChoiceButton({
   );
 }
 
-function SectionHeading({ eyebrow, title, description }) {
+function SectionTitle({
+  number,
+  title,
+  description,
+}) {
   return (
-    <div className="mb-8">
-      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-pine">
-        {eyebrow}
-      </p>
+    <div className="border-b border-line pb-5">
+      <div className="flex items-center gap-3">
+        <span className="grid h-8 w-8 place-items-center rounded-xl bg-pine-soft font-mono text-[10px] font-bold text-pine-deep">
+          {number}
+        </span>
 
-      <h2 className="mt-2 font-display text-3xl text-pine-deep sm:text-4xl">
-        {title}
-      </h2>
+        <h2 className="font-display text-2xl text-pine-deep sm:text-3xl">
+          {title}
+        </h2>
+      </div>
 
-      <p className="mt-2 max-w-xl text-sm leading-7 text-ink-soft">
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-ink-soft">
         {description}
       </p>
     </div>
   );
 }
 
-function StepIcon({ number, active, completed }) {
+function Gauge({ score }) {
+  const clamped = Math.max(0, Math.min(10, score ?? 0));
+
+  const offset =
+    GAUGE_LENGTH * (1 - clamped / 10);
+
+  const hasScore = typeof score === "number";
+
   return (
-    <div
-      className={[
-        "grid h-10 w-10 shrink-0 place-items-center rounded-2xl border font-mono text-xs font-bold transition-all duration-300",
-        completed
-          ? "border-pine bg-pine text-white"
-          : active
-            ? "border-pine/30 bg-pine-soft text-pine-deep shadow-soft"
-            : "border-line bg-white text-ink-muted",
-      ].join(" ")}
+    <svg
+      viewBox="0 0 240 160"
+      className="mx-auto w-full max-w-[330px]"
+      aria-hidden="true"
     >
-      {completed ? (
-        <svg
-          viewBox="0 0 20 20"
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      <defs>
+        <linearGradient
+          id="scoreGradient"
+          x1="0%"
+          y1="0%"
+          x2="100%"
+          y2="0%"
         >
-          <path d="m5 10 3 3 7-7" />
-        </svg>
-      ) : (
-        number
+          <stop offset="0%" stopColor="#d95c67" />
+          <stop offset="52%" stopColor="#d89b2b" />
+          <stop offset="100%" stopColor="#635bff" />
+        </linearGradient>
+      </defs>
+
+      <path
+        d="M 30 140 A 100 100 0 0 1 210 140"
+        fill="none"
+        stroke="#353550"
+        strokeOpacity="0.16"
+        strokeWidth="15"
+        strokeLinecap="round"
+      />
+
+      {hasScore && (
+        <path
+          d="M 30 140 A 100 100 0 0 1 210 140"
+          fill="none"
+          stroke="url(#scoreGradient)"
+          strokeWidth="15"
+          strokeLinecap="round"
+          strokeDasharray={GAUGE_LENGTH}
+          strokeDashoffset={offset}
+          className="transition-all duration-1000 ease-out"
+        />
       )}
-    </div>
+
+      <circle
+        cx="120"
+        cy="140"
+        r="6"
+        fill={hasScore ? "#635bff" : "#b8b7c7"}
+      />
+    </svg>
   );
 }
 
 function Assessment() {
-  const [step, setStep] = useState(1);
+  const navigate = useNavigate();
+  const resultRef = useRef(null);
+
   const [data, setData] = useState(INITIAL_DATA);
   const [errors, setErrors] = useState({});
-  const [completed, setCompleted] = useState(false);
+  const [score, setScore] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState("");
 
-  const progress = useMemo(() => {
-    return (step / STEPS.length) * 100;
-  }, [step]);
+  const signal = useMemo(() => {
+    if (score === null) return null;
+    return getSignal(score);
+  }, [score]);
 
   const updateField = (field, value) => {
     setData((current) => ({
@@ -297,92 +336,92 @@ function Assessment() {
       delete next[field];
       return next;
     });
+
+    setApiError("");
   };
 
-  const validateStep = () => {
+  const validate = () => {
     const nextErrors = {};
 
-    if (step === 1) {
-      if (!data.age) {
-        nextErrors.age = "Age is required.";
-      } else if (Number(data.age) < 10 || Number(data.age) > 100) {
-        nextErrors.age = "Enter an age between 10 and 100.";
-      }
-
-      if (!data.gender) {
-        nextErrors.gender = "Please select your gender.";
-      }
-
-      if (!data.country.trim()) {
-        nextErrors.country = "Country is required.";
-      }
-
-      if (!data.academic_level) {
-        nextErrors.academic_level = "Please select your academic level.";
-      }
+    if (
+      data.age === "" ||
+      Number(data.age) < 10 ||
+      Number(data.age) > 100
+    ) {
+      nextErrors.age =
+        "Enter an age between 10 and 100.";
     }
 
-    if (step === 2) {
-      if (!data.most_used_platform) {
-        nextErrors.most_used_platform =
-          "Please select a platform.";
-      }
-
-      if (!data.purpose_of_use) {
-        nextErrors.purpose_of_use =
-          "Please select your primary purpose.";
-      }
-
-      if (
-        data.avg_daily_usage_hours === "" ||
-        Number(data.avg_daily_usage_hours) < 0 ||
-        Number(data.avg_daily_usage_hours) > 24
-      ) {
-        nextErrors.avg_daily_usage_hours =
-          "Enter a value from 0 to 24 hours.";
-      }
-
-      if (
-        data.daily_unlocks === "" ||
-        Number(data.daily_unlocks) < 0
-      ) {
-        nextErrors.daily_unlocks =
-          "Enter 0 or more unlocks.";
-      }
+    if (!data.gender) {
+      nextErrors.gender = "Please select your gender.";
     }
 
-    if (step === 3) {
-      if (
-        data.study_hours === "" ||
-        Number(data.study_hours) < 0 ||
-        Number(data.study_hours) > 24
-      ) {
-        nextErrors.study_hours =
-          "Enter a value from 0 to 24 hours.";
-      }
+    if (!data.country.trim()) {
+      nextErrors.country = "Country is required.";
+    }
 
-      if (
-        data.physical_activity_hours === "" ||
-        Number(data.physical_activity_hours) < 0 ||
-        Number(data.physical_activity_hours) > 24
-      ) {
-        nextErrors.physical_activity_hours =
-          "Enter a value from 0 to 24 hours.";
-      }
+    if (!data.academic_level) {
+      nextErrors.academic_level =
+        "Please select your academic level.";
+    }
 
-      if (
-        data.sleep_hours_per_night === "" ||
-        Number(data.sleep_hours_per_night) < 0 ||
-        Number(data.sleep_hours_per_night) > 24
-      ) {
-        nextErrors.sleep_hours_per_night =
-          "Enter a value from 0 to 24 hours.";
-      }
+    if (!data.most_used_platform) {
+      nextErrors.most_used_platform =
+        "Please select a platform.";
+    }
 
-      if (!data.stress_level) {
-        nextErrors.stress_level =
-          "Please select your stress level.";
-      }
+    if (!data.purpose_of_use) {
+      nextErrors.purpose_of_use =
+        "Please select your primary purpose.";
+    }
+
+    if (
+      data.avg_daily_usage_hours === "" ||
+      Number(data.avg_daily_usage_hours) < 0 ||
+      Number(data.avg_daily_usage_hours) > 24
+    ) {
+      nextErrors.avg_daily_usage_hours =
+        "Enter a value from 0 to 24 hours.";
+    }
+
+    if (
+      data.daily_unlocks === "" ||
+      Number(data.daily_unlocks) < 0
+    ) {
+      nextErrors.daily_unlocks =
+        "Enter 0 or more unlocks.";
+    }
+
+    if (
+      data.study_hours === "" ||
+      Number(data.study_hours) < 0 ||
+      Number(data.study_hours) > 24
+    ) {
+      nextErrors.study_hours =
+        "Enter a value from 0 to 24 hours.";
+    }
+
+    if (
+      data.physical_activity_hours === "" ||
+      Number(data.physical_activity_hours) < 0 ||
+      Number(data.physical_activity_hours) > 24
+    ) {
+      nextErrors.physical_activity_hours =
+        "Enter a value from 0 to 24 hours.";
+    }
+
+    if (
+      data.sleep_hours_per_night === "" ||
+      Number(data.sleep_hours_per_night) < 0 ||
+      Number(data.sleep_hours_per_night) > 24
+    ) {
+      nextErrors.sleep_hours_per_night =
+        "Enter a value from 0 to 24 hours.";
+    }
+
+    if (!data.stress_level) {
+      nextErrors.stress_level =
+        "Please select your stress level.";
     }
 
     setErrors(nextErrors);
@@ -390,19 +429,128 @@ function Assessment() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const goNext = () => {
-    if (!validateStep()) return;
-
-    setStep((current) => Math.min(current + 1, STEPS.length));
+  const buildPayload = () => {
+    return {
+      age: Number(data.age),
+      gender: data.gender,
+      country: data.country.trim(),
+      academic_level: data.academic_level,
+      most_used_platform: data.most_used_platform,
+      purpose_of_use: data.purpose_of_use,
+      avg_daily_usage_hours: Number(
+        data.avg_daily_usage_hours,
+      ),
+      daily_unlocks: Number(data.daily_unlocks),
+      study_hours: Number(data.study_hours),
+      physical_activity_hours: Number(
+        data.physical_activity_hours,
+      ),
+      sleep_hours_per_night: Number(
+        data.sleep_hours_per_night,
+      ),
+      stress_level: data.stress_level,
+    };
   };
 
-  const goBack = () => {
+  const submitAssessment = async () => {
+    if (isSubmitting) return;
+
+    if (!validate()) {
+      window.scrollTo({
+        top: 120,
+        behavior: "smooth",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setApiError("");
+    setScore(null);
+
+    try {
+      const payload = buildPayload();
+
+      const response = await api.post(
+        "/predict",
+        payload,
+      );
+
+      const predictedScore =
+        response.data?.predicted_mental_health_score;
+
+      if (
+        typeof predictedScore !== "number" ||
+        Number.isNaN(predictedScore)
+      ) {
+        throw new Error(
+          "The API returned an invalid score.",
+        );
+      }
+
+      setScore(predictedScore);
+
+      requestAnimationFrame(() => {
+        resultRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    } catch (error) {
+      if (error.response) {
+        const status = error.response.status;
+
+        if (status === 422) {
+          const detail = error.response.data?.detail;
+
+          if (Array.isArray(detail)) {
+            const serverErrors = {};
+
+            detail.forEach((item) => {
+              const location =
+                Array.isArray(item.loc)
+                  ? item.loc[item.loc.length - 1]
+                  : null;
+
+              if (location) {
+                serverErrors[location] =
+                  item.msg || "Invalid value.";
+              }
+            });
+
+            setErrors((current) => ({
+              ...current,
+              ...serverErrors,
+            }));
+          }
+
+          setApiError(
+            "The API rejected some of the submitted values. Please review the highlighted fields.",
+          );
+        } else {
+          setApiError(
+            "The prediction service returned an error. Please try again.",
+          );
+        }
+      } else if (error.request) {
+        setApiError(
+          "Could not reach the FastAPI server. Make sure the backend is running on port 8000.",
+        );
+      } else {
+        setApiError(
+          error.message ||
+            "Something went wrong while generating the prediction.",
+        );
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetAssessment = () => {
+    setData(INITIAL_DATA);
     setErrors({});
-    setStep((current) => Math.max(current - 1, 1));
-  };
-
-  const submitAssessment = () => {
-    setCompleted(true);
+    setScore(null);
+    setApiError("");
 
     window.scrollTo({
       top: 0,
@@ -410,271 +558,121 @@ function Assessment() {
     });
   };
 
-  const resetAssessment = () => {
-    setData(INITIAL_DATA);
-    setErrors({});
-    setStep(1);
-    setCompleted(false);
+  const openFullResult = () => {
+    if (score === null) return;
+
+    navigate("/result", {
+      state: {
+        score,
+        inputs: data,
+      },
+    });
   };
 
-  if (completed) {
-    return (
-      <section className="relative isolate min-h-[calc(100vh-76px)] overflow-hidden">
-        <div className="ambient-orb ambient-orb-one -right-24 top-12 -z-10" />
-        <div className="ambient-orb ambient-orb-two -left-24 bottom-12 -z-10" />
-
-        <div className="mx-auto max-w-5xl px-5 py-14 sm:px-8 sm:py-20">
-          <div className="surface-strong overflow-hidden rounded-[32px]">
-            <div className="grid lg:grid-cols-[0.85fr_1.15fr]">
-              <div className="bg-pine-deep p-8 text-white sm:p-10">
-                <div className="grid h-14 w-14 place-items-center rounded-2xl bg-white/10">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-7 w-7 text-mint"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 20V10" />
-                    <path d="M12 13C8.8 13 7 11.3 7 8.5C7 7 8.2 6 9.7 6c1.2 0 2.1.6 2.3 1.7" />
-                    <path d="M12 15c3.2 0 5-1.7 5-4.5C17 9 15.8 8 14.3 8c-1.2 0-2.1.6-2.3 1.7" />
-                    <path d="M9 20h6" />
-                  </svg>
-                </div>
-
-                <p className="mt-8 font-mono text-[10px] uppercase tracking-[0.2em] text-mint">
-                  Assessment captured
-                </p>
-
-                <h1 className="mt-3 font-display text-4xl sm:text-5xl">
-                  Ready for
-                  <span className="block italic text-mint">
-                    the signal.
-                  </span>
-                </h1>
-
-                <p className="mt-6 max-w-sm text-sm leading-7 text-white/60">
-                  Your responses have been collected successfully. The next
-                  milestone connects this assessment to your FastAPI model.
-                </p>
-
-                <div className="mt-8 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">
-                  <span className="h-1.5 w-1.5 rounded-full bg-mint" />
-                  12 inputs captured
-                </div>
-              </div>
-
-              <div className="p-8 sm:p-10">
-                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted">
-                  Response summary
-                </p>
-
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  {[
-                    ["Age", `${data.age} years`],
-                    ["Academic", data.academic_level],
-                    ["Platform", data.most_used_platform],
-                    ["Screen time", `${data.avg_daily_usage_hours} hrs`],
-                    ["Sleep", `${data.sleep_hours_per_night} hrs`],
-                    ["Stress", data.stress_level],
-                  ].map(([label, value]) => (
-                    <div
-                      key={label}
-                      className="rounded-2xl border border-line bg-paper p-4"
-                    >
-                      <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-ink-muted">
-                        {label}
-                      </p>
-
-                      <p className="mt-2 text-sm font-semibold text-ink">
-                        {value}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-7 rounded-2xl bg-amber-soft p-5">
-                  <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-ink-muted">
-                    Important
-                  </p>
-
-                  <p className="mt-2 text-sm leading-6 text-ink-soft">
-                    This application provides a model-based screening signal.
-                    It is not a medical diagnosis.
-                  </p>
-                </div>
-
-                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={resetAssessment}
-                    className="rounded-xl border border-line bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:border-pine/25 hover:bg-mint-soft"
-                  >
-                    Start over
-                  </button>
-
-                  <Link
-                    to="/"
-                    className="rounded-xl bg-pine px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-pine-deep"
-                  >
-                    Return home
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section className="relative isolate min-h-[calc(100vh-76px)] overflow-hidden">
+    <section className="relative isolate overflow-hidden">
       <div className="ambient-orb ambient-orb-one -right-32 top-10 -z-10" />
-      <div className="ambient-orb ambient-orb-two -left-28 bottom-10 -z-10" />
+      <div className="ambient-orb ambient-orb-two -left-28 bottom-24 -z-10" />
 
-      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-12 lg:py-14">
-        {/* top bar */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link
-            to="/"
-            className="inline-flex w-fit items-center gap-2 text-sm font-medium text-ink-soft transition hover:text-pine"
-          >
-            <svg
-              viewBox="0 0 20 20"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+      <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
+        {/* top heading */}
+        <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <Link
+              to="/"
+              className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-ink-soft transition hover:text-pine"
             >
-              <path d="M15 10H5" />
-              <path d="m9 6-4 4 4 4" />
-            </svg>
+              <svg
+                viewBox="0 0 20 20"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M15 10H5" />
+                <path d="m9 6-4 4 4 4" />
+              </svg>
 
-            Back to home
-          </Link>
+              Back to home
+            </Link>
 
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted">
-              Assessment
-            </span>
+            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-pine">
+              Student wellness analytics
+            </div>
 
-            <span className="h-1 w-1 rounded-full bg-line" />
+            <h1 className="mt-2 max-w-3xl font-display text-4xl leading-tight text-pine-deep sm:text-5xl">
+              Understand your
+              <span className="italic text-pine">
+                {" "}
+                daily signal.
+              </span>
+            </h1>
 
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-pine">
-              {step} / {STEPS.length}
-            </span>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-ink-soft sm:text-base">
+              Share a few details about your habits, routine,
+              screen time, and stress. The model returns a
+              score from 0 to 10.
+            </p>
+          </div>
+
+          <div className="surface rounded-2xl px-4 py-3 lg:max-w-xs">
+            <div className="flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-pine-soft text-pine">
+                <svg
+                  viewBox="0 0 20 20"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                >
+                  <circle cx="10" cy="10" r="7.5" />
+                  <path d="M10 8v5" />
+                  <path d="M10 5.5h.01" />
+                </svg>
+              </span>
+
+              <p className="text-xs leading-5 text-ink-soft">
+                This is an ML-based informational signal,
+                not a medical diagnosis.
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* progress */}
-        <div className="mb-8">
-          <div className="h-1.5 overflow-hidden rounded-full bg-paper-deep">
-            <div
-              className="h-full rounded-full bg-pine transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[300px_1fr] xl:grid-cols-[330px_1fr]">
-          {/* sidebar */}
-          <aside className="surface rounded-[28px] p-5 lg:sticky lg:top-24 lg:h-fit">
-            <div className="px-2 pb-5">
-              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-ink-muted">
-                Your journey
-              </p>
-
-              <h2 className="mt-2 font-display text-2xl text-pine-deep">
-                One step
-                <span className="italic text-pine"> at a time.</span>
-              </h2>
-            </div>
-
-            <div className="space-y-2">
-              {STEPS.map((item) => {
-                const active = step === item.id;
-                const isCompleted = step > item.id;
-
-                return (
-                  <div
-                    key={item.id}
-                    className={[
-                      "flex items-center gap-3 rounded-2xl p-3 transition-all duration-300",
-                      active
-                        ? "bg-pine-soft"
-                        : "hover:bg-paper",
-                    ].join(" ")}
-                  >
-                    <StepIcon
-                      number={item.eyebrow}
-                      active={active}
-                      completed={isCompleted}
-                    />
-
-                    <div className="min-w-0">
-                      <p
-                        className={[
-                          "text-sm font-semibold",
-                          active
-                            ? "text-pine-deep"
-                            : "text-ink-soft",
-                        ].join(" ")}
-                      >
-                        {item.title}
-                      </p>
-
-                      <p className="mt-0.5 truncate text-xs text-ink-muted">
-                        {item.description}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-5 rounded-2xl bg-pine-deep p-5 text-white">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-mint">
-                  Progress
-                </span>
-
-                <span className="font-mono text-[10px] text-white/50">
-                  {Math.round(progress)}%
-                </span>
-              </div>
-
-              <p className="mt-4 text-sm leading-6 text-white/65">
-                There are no right or wrong answers here. Just describe your
-                everyday rhythm as honestly as you can.
-              </p>
-            </div>
-          </aside>
-
-          {/* form */}
-          <div className="surface-strong rounded-[28px] p-6 sm:p-8 lg:p-10">
-            {step === 1 && (
-              <>
-                <SectionHeading
-                  eyebrow="01 · Personal"
-                  title="Let's start with context."
-                  description="These details help the model understand the background behind your daily patterns."
+        <div className="grid gap-6 lg:grid-cols-[1.45fr_0.82fr]">
+          {/* =====================================================
+              FORM
+          ===================================================== */}
+          <div className="surface-strong rounded-[30px] p-5 sm:p-7 lg:p-9">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                submitAssessment();
+              }}
+            >
+              {/* Profile */}
+              <section>
+                <SectionTitle
+                  number="01"
+                  title="Profile"
+                  description="A little context helps the model interpret your overall pattern."
                 />
 
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="mt-7 grid gap-5 md:grid-cols-3">
                   <div>
-                    <FieldLabel hint="10–100">Age</FieldLabel>
+                    <FieldLabel hint="10–100">
+                      Age
+                    </FieldLabel>
 
                     <TextInput
                       type="number"
                       min="10"
                       max="100"
                       step="1"
-                      placeholder="e.g. 21"
+                      placeholder="e.g. 22"
                       value={data.age}
                       onChange={(value) =>
                         updateField("age", value)
@@ -692,16 +690,28 @@ function Assessment() {
                     <FieldLabel>Gender</FieldLabel>
 
                     <div className="grid grid-cols-2 gap-3">
-                      {["Male", "Female"].map((option) => (
-                        <ChoiceButton
-                          key={option}
-                          title={option}
-                          selected={data.gender === option}
-                          onClick={() =>
-                            updateField("gender", option)
-                          }
-                        />
-                      ))}
+                      {["Male", "Female"].map(
+                        (option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() =>
+                              updateField(
+                                "gender",
+                                option,
+                              )
+                            }
+                            className={[
+                              "rounded-2xl border px-4 py-3.5 text-sm font-semibold transition-all duration-300",
+                              data.gender === option
+                                ? "border-pine bg-pine-soft text-pine-deep"
+                                : "border-line bg-paper text-ink-soft hover:border-pine/20 hover:bg-white",
+                            ].join(" ")}
+                          >
+                            {option}
+                          </button>
+                        ),
+                      )}
                     </div>
 
                     {errors.gender && (
@@ -712,26 +722,30 @@ function Assessment() {
                   </div>
 
                   <div>
-                    <FieldLabel>Country</FieldLabel>
+                    <FieldLabel>
+                      Country
+                    </FieldLabel>
 
                     <TextInput
                       list="country-options"
                       placeholder="e.g. Bangladesh"
                       value={data.country}
                       onChange={(value) =>
-                        updateField("country", value)
+                        updateField(
+                          "country",
+                          value,
+                        )
                       }
                     />
 
                     <datalist id="country-options">
                       {COUNTRIES.map((country) => (
-                        <option key={country} value={country} />
+                        <option
+                          key={country}
+                          value={country}
+                        />
                       ))}
                     </datalist>
-
-                    <p className="mt-2 text-xs text-ink-muted">
-                      Not listed? You can type your country.
-                    </p>
 
                     {errors.country && (
                       <p className="mt-2 text-xs text-coral">
@@ -739,14 +753,30 @@ function Assessment() {
                       </p>
                     )}
                   </div>
+                </div>
+              </section>
 
+              {/* Academic + Digital */}
+              <section className="mt-10">
+                <SectionTitle
+                  number="02"
+                  title="Academic & digital habits"
+                  description="Tell us what technology usually looks like during a normal day."
+                />
+
+                <div className="mt-7 grid gap-5 md:grid-cols-2">
                   <div>
-                    <FieldLabel>Academic level</FieldLabel>
+                    <FieldLabel>
+                      Academic level
+                    </FieldLabel>
 
                     <SelectInput
                       value={data.academic_level}
                       onChange={(value) =>
-                        updateField("academic_level", value)
+                        updateField(
+                          "academic_level",
+                          value,
+                        )
                       }
                       placeholder="Choose academic level"
                       options={ACADEMIC_LEVELS}
@@ -758,21 +788,11 @@ function Assessment() {
                       </p>
                     )}
                   </div>
-                </div>
-              </>
-            )}
 
-            {step === 2 && (
-              <>
-                <SectionHeading
-                  eyebrow="02 · Digital habits"
-                  title="How does technology fit into your day?"
-                  description="Tell us about your usual social-media and phone-use patterns."
-                />
-
-                <div className="grid gap-6 md:grid-cols-2">
                   <div>
-                    <FieldLabel>Most-used platform</FieldLabel>
+                    <FieldLabel>
+                      Most-used platform
+                    </FieldLabel>
 
                     <SelectInput
                       value={data.most_used_platform}
@@ -794,12 +814,17 @@ function Assessment() {
                   </div>
 
                   <div>
-                    <FieldLabel>Primary purpose</FieldLabel>
+                    <FieldLabel>
+                      Primary purpose
+                    </FieldLabel>
 
                     <SelectInput
                       value={data.purpose_of_use}
                       onChange={(value) =>
-                        updateField("purpose_of_use", value)
+                        updateField(
+                          "purpose_of_use",
+                          value,
+                        )
                       }
                       placeholder="What do you mainly use it for?"
                       options={PURPOSES}
@@ -823,8 +848,10 @@ function Assessment() {
                         min="0"
                         max="24"
                         step="0.1"
-                        placeholder="e.g. 5.5"
-                        value={data.avg_daily_usage_hours}
+                        placeholder="e.g. 6"
+                        value={
+                          data.avg_daily_usage_hours
+                        }
                         onChange={(value) =>
                           updateField(
                             "avg_daily_usage_hours",
@@ -857,7 +884,10 @@ function Assessment() {
                       placeholder="e.g. 60"
                       value={data.daily_unlocks}
                       onChange={(value) =>
-                        updateField("daily_unlocks", value)
+                        updateField(
+                          "daily_unlocks",
+                          value,
+                        )
                       }
                     />
 
@@ -868,71 +898,42 @@ function Assessment() {
                     )}
                   </div>
                 </div>
+              </section>
 
-                <div className="mt-8 rounded-2xl border border-line bg-mint-soft p-5">
-                  <div className="flex gap-3">
-                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white text-pine shadow-sm">
-                      <svg
-                        viewBox="0 0 20 20"
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect
-                          x="5"
-                          y="2.5"
-                          width="10"
-                          height="15"
-                          rx="2"
-                        />
-                        <path d="M8 5h4" />
-                        <path d="M9 14.5h2" />
-                      </svg>
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-semibold text-ink">
-                        Think about a typical day
-                      </p>
-
-                      <p className="mt-1 text-xs leading-6 text-ink-soft">
-                        Use your usual average rather than an unusually busy
-                        or quiet day.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {step === 3 && (
-              <>
-                <SectionHeading
-                  eyebrow="03 · Lifestyle & stress"
-                  title="Now, your everyday rhythm."
-                  description="These signals describe sleep, study, physical activity and perceived stress."
+              {/* Lifestyle */}
+              <section className="mt-10">
+                <SectionTitle
+                  number="03"
+                  title="Lifestyle & stress"
+                  description="Your sleep, study, movement, and perceived stress complete the picture."
                 />
 
-                <div className="grid gap-6 md:grid-cols-3">
+                <div className="mt-7 grid gap-5 md:grid-cols-3">
                   <div>
                     <FieldLabel hint="0–24 hrs">
                       Study hours / day
                     </FieldLabel>
 
-                    <TextInput
-                      type="number"
-                      min="0"
-                      max="24"
-                      step="0.1"
-                      placeholder="e.g. 5"
-                      value={data.study_hours}
-                      onChange={(value) =>
-                        updateField("study_hours", value)
-                      }
-                    />
+                    <div className="relative">
+                      <TextInput
+                        type="number"
+                        min="0"
+                        max="24"
+                        step="0.1"
+                        placeholder="e.g. 5"
+                        value={data.study_hours}
+                        onChange={(value) =>
+                          updateField(
+                            "study_hours",
+                            value,
+                          )
+                        }
+                      />
+
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-mono text-[10px] uppercase text-ink-muted">
+                        hrs
+                      </span>
+                    </div>
 
                     {errors.study_hours && (
                       <p className="mt-2 text-xs text-coral">
@@ -946,20 +947,28 @@ function Assessment() {
                       Physical activity / day
                     </FieldLabel>
 
-                    <TextInput
-                      type="number"
-                      min="0"
-                      max="24"
-                      step="0.1"
-                      placeholder="e.g. 1"
-                      value={data.physical_activity_hours}
-                      onChange={(value) =>
-                        updateField(
-                          "physical_activity_hours",
-                          value,
-                        )
-                      }
-                    />
+                    <div className="relative">
+                      <TextInput
+                        type="number"
+                        min="0"
+                        max="24"
+                        step="0.1"
+                        placeholder="e.g. 1"
+                        value={
+                          data.physical_activity_hours
+                        }
+                        onChange={(value) =>
+                          updateField(
+                            "physical_activity_hours",
+                            value,
+                          )
+                        }
+                      />
+
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-mono text-[10px] uppercase text-ink-muted">
+                        hrs
+                      </span>
+                    </div>
 
                     {errors.physical_activity_hours && (
                       <p className="mt-2 text-xs text-coral">
@@ -973,20 +982,28 @@ function Assessment() {
                       Sleep / night
                     </FieldLabel>
 
-                    <TextInput
-                      type="number"
-                      min="0"
-                      max="24"
-                      step="0.1"
-                      placeholder="e.g. 7"
-                      value={data.sleep_hours_per_night}
-                      onChange={(value) =>
-                        updateField(
-                          "sleep_hours_per_night",
-                          value,
-                        )
-                      }
-                    />
+                    <div className="relative">
+                      <TextInput
+                        type="number"
+                        min="0"
+                        max="24"
+                        step="0.1"
+                        placeholder="e.g. 7"
+                        value={
+                          data.sleep_hours_per_night
+                        }
+                        onChange={(value) =>
+                          updateField(
+                            "sleep_hours_per_night",
+                            value,
+                          )
+                        }
+                      />
+
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-mono text-[10px] uppercase text-ink-muted">
+                        hrs
+                      </span>
+                    </div>
 
                     {errors.sleep_hours_per_night && (
                       <p className="mt-2 text-xs text-coral">
@@ -996,19 +1013,19 @@ function Assessment() {
                   </div>
                 </div>
 
-                <div className="mt-8">
+                <div className="mt-7">
                   <FieldLabel>
                     Perceived stress level
                   </FieldLabel>
 
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     {STRESS_LEVELS.map((option) => (
-                      <ChoiceButton
+                      <StressButton
                         key={option.value}
-                        title={option.label}
-                        description={option.description}
+                        option={option}
                         selected={
-                          data.stress_level === option.value
+                          data.stress_level ===
+                          option.value
                         }
                         onClick={() =>
                           updateField(
@@ -1026,267 +1043,217 @@ function Assessment() {
                     </p>
                   )}
                 </div>
+              </section>
 
-                <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-paper p-4">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-ink-muted">
-                      Study
-                    </p>
+              {/* submit */}
+              <div className="mt-10 border-t border-line pt-7">
+                {apiError && (
+                  <div className="mb-5 flex gap-3 rounded-2xl border border-coral/20 bg-coral-soft p-4">
+                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white text-coral">
+                      !
+                    </div>
 
-                    <p className="mt-2 font-mono text-xl font-bold text-pine-deep">
-                      {data.study_hours || "—"}
-                      <span className="ml-1 text-[10px] font-normal text-ink-muted">
-                        hrs
-                      </span>
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-paper p-4">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-ink-muted">
-                      Movement
-                    </p>
-
-                    <p className="mt-2 font-mono text-xl font-bold text-pine-deep">
-                      {data.physical_activity_hours || "—"}
-                      <span className="ml-1 text-[10px] font-normal text-ink-muted">
-                        hrs
-                      </span>
+                    <p className="text-sm leading-6 text-ink-soft">
+                      {apiError}
                     </p>
                   </div>
+                )}
 
-                  <div className="rounded-2xl bg-paper p-4">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-ink-muted">
-                      Sleep
-                    </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="max-w-md text-xs leading-5 text-ink-muted">
+                    Use your usual day as the reference point.
+                    There are no right or wrong answers.
+                  </p>
 
-                    <p className="mt-2 font-mono text-xl font-bold text-pine-deep">
-                      {data.sleep_hours_per_night || "—"}
-                      <span className="ml-1 text-[10px] font-normal text-ink-muted">
-                        hrs
-                      </span>
-                    </p>
-                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-pine px-7 py-3.5 text-sm font-semibold text-white shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:bg-pine-deep hover:shadow-card disabled:translate-y-0 disabled:opacity-60"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Reading your signal...
+                      </>
+                    ) : (
+                      <>
+                        Read my signal
+
+                        <svg
+                          viewBox="0 0 20 20"
+                          className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M4 10h11" />
+                          <path d="m11 6 4 4-4 4" />
+                        </svg>
+                      </>
+                    )}
+                  </button>
                 </div>
-              </>
-            )}
+              </div>
+            </form>
+          </div>
 
-            {step === 4 && (
-              <>
-                <SectionHeading
-                  eyebrow="04 · Review"
-                  title="A final look before we read the signal."
-                  description="Check the information below. You can go back and change anything before submitting."
-                />
+          {/* =====================================================
+              RESULT
+          ===================================================== */}
+          <aside
+            ref={resultRef}
+            className="lg:sticky lg:top-24 lg:h-fit"
+          >
+            <div className="overflow-hidden rounded-[30px] bg-pine-deep text-white shadow-float">
+              {/* top accent */}
+              <div className="h-1.5 bg-gradient-to-r from-coral via-amber to-pine" />
 
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-line bg-paper p-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-pine">
-                        Personal
-                      </p>
+              <div className="p-6 sm:p-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/45">
+                      Live result
+                    </p>
 
-                      <button
-                        type="button"
-                        onClick={() => setStep(1)}
-                        className="text-xs font-semibold text-pine transition hover:text-pine-deep"
-                      >
-                        Edit
-                      </button>
-                    </div>
-
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                      {[
-                        ["Age", data.age],
-                        ["Gender", data.gender],
-                        ["Country", data.country],
-                        ["Academic", data.academic_level],
-                      ].map(([label, value]) => (
-                        <div key={label}>
-                          <p className="text-[11px] text-ink-muted">
-                            {label}
-                          </p>
-                          <p className="mt-1 text-sm font-semibold text-ink">
-                            {value}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                    <h2 className="mt-1 font-display text-2xl">
+                      Your signal
+                    </h2>
                   </div>
 
-                  <div className="rounded-2xl border border-line bg-paper p-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-pine">
-                        Digital habits
+                  <span className="rounded-full bg-white/10 px-3 py-1 font-mono text-[9px] uppercase tracking-[0.12em] text-white/55">
+                    0–10
+                  </span>
+                </div>
+
+                <div className="mt-6">
+                  <Gauge score={score} />
+                </div>
+
+                {isSubmitting ? (
+                  <div className="py-3 text-center">
+                    <div className="mx-auto mb-4 h-12 w-12 animate-pulse rounded-full bg-white/10" />
+
+                    <p className="font-display text-2xl">
+                      Reading the signal...
+                    </p>
+
+                    <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
+                      Your responses are being passed through
+                      the prediction model.
+                    </p>
+                  </div>
+                ) : score === null ? (
+                  <div className="py-3 text-center">
+                    <p className="font-display text-2xl">
+                      Your score will appear here
+                    </p>
+
+                    <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-white/55">
+                      Complete the form and submit it to
+                      generate your model-based score.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-center">
+                      <div className="flex items-end justify-center gap-2">
+                        <span className="font-mono text-6xl font-bold tracking-[-0.06em] sm:text-7xl">
+                          {score.toFixed(2)}
+                        </span>
+
+                        <span className="mb-2 font-mono text-sm text-white/45">
+                          /10
+                        </span>
+                      </div>
+
+                      <div className="mt-3 inline-flex items-center rounded-full bg-white/10 px-4 py-2">
+                        <span className="mr-2 h-2 w-2 rounded-full bg-white/80" />
+
+                        <span className="text-sm font-semibold">
+                          {signal.label}
+                        </span>
+                      </div>
+
+                      <p className="mt-5 text-sm font-medium leading-6 text-white/85">
+                        {signal.title}
                       </p>
 
-                      <button
-                        type="button"
-                        onClick={() => setStep(2)}
-                        className="text-xs font-semibold text-pine transition hover:text-pine-deep"
-                      >
-                        Edit
-                      </button>
+                      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-white/55">
+                        {signal.context}
+                      </p>
                     </div>
 
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="mt-7 grid gap-3 sm:grid-cols-2">
                       {[
-                        [
-                          "Platform",
-                          data.most_used_platform,
-                        ],
-                        ["Purpose", data.purpose_of_use],
                         [
                           "Screen time",
                           `${data.avg_daily_usage_hours} hrs`,
                         ],
                         [
-                          "Unlocks",
-                          data.daily_unlocks,
-                        ],
-                      ].map(([label, value]) => (
-                        <div key={label}>
-                          <p className="text-[11px] text-ink-muted">
-                            {label}
-                          </p>
-                          <p className="mt-1 text-sm font-semibold text-ink">
-                            {value}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-line bg-paper p-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-pine">
-                        Lifestyle & stress
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={() => setStep(3)}
-                        className="text-xs font-semibold text-pine transition hover:text-pine-deep"
-                      >
-                        Edit
-                      </button>
-                    </div>
-
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                      {[
-                        [
-                          "Study",
-                          `${data.study_hours} hrs`,
+                          "Sleep",
+                          `${data.sleep_hours_per_night} hrs`,
                         ],
                         [
                           "Activity",
                           `${data.physical_activity_hours} hrs`,
                         ],
                         [
-                          "Sleep",
-                          `${data.sleep_hours_per_night} hrs`,
+                          "Stress",
+                          data.stress_level,
                         ],
-                        ["Stress", data.stress_level],
                       ].map(([label, value]) => (
-                        <div key={label}>
-                          <p className="text-[11px] text-ink-muted">
+                        <div
+                          key={label}
+                          className="rounded-2xl border border-white/10 bg-white/[0.06] p-4"
+                        >
+                          <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-white/40">
                             {label}
                           </p>
-                          <p className="mt-1 text-sm font-semibold text-ink">
+
+                          <p className="mt-2 text-sm font-semibold text-white">
                             {value}
                           </p>
                         </div>
                       ))}
                     </div>
-                  </div>
-                </div>
 
-                <div className="mt-6 flex gap-3 rounded-2xl border border-amber/20 bg-amber-soft p-5">
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/80 text-ink">
-                    <svg
-                      viewBox="0 0 20 20"
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="10" cy="10" r="7.5" />
-                      <path d="M10 8v5" />
-                      <path d="M10 5.5h.01" />
-                    </svg>
-                  </div>
+                    <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.05] p-4">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">
+                        About this result
+                      </p>
 
-                  <div>
-                    <p className="text-sm font-semibold text-ink">
-                      Before you continue
-                    </p>
+                      <p className="mt-2 text-xs leading-6 text-white/55">
+                        This score is generated from the trained
+                        machine-learning model using the information
+                        you submitted. It should be treated as an
+                        informational signal, not a clinical assessment.
+                      </p>
+                    </div>
 
-                    <p className="mt-1 text-xs leading-6 text-ink-soft">
-                      The result generated by this application is an
-                      ML-based screening signal and should not be treated as
-                      a medical diagnosis.
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
+                    <div className="mt-6 flex flex-col gap-3">
+                      <button
+                        type="button"
+                        onClick={openFullResult}
+                        className="rounded-2xl bg-white px-5 py-3.5 text-sm font-semibold text-pine-deep transition hover:bg-white/90"
+                      >
+                        Open full result
+                      </button>
 
-            {/* navigation */}
-            <div className="mt-10 flex flex-col-reverse gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
-              <button
-                type="button"
-                onClick={goBack}
-                disabled={step === 1}
-                className="rounded-xl border border-line bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:bg-paper disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Back
-              </button>
-
-              {step < STEPS.length ? (
-                <button
-                  type="button"
-                  onClick={goNext}
-                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-pine px-6 py-3 text-sm font-semibold text-white shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:bg-pine-deep hover:shadow-card"
-                >
-                  Continue
-
-                  <svg
-                    viewBox="0 0 20 20"
-                    className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M4 10h11" />
-                    <path d="m11 6 4 4-4 4" />
-                  </svg>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={submitAssessment}
-                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-pine px-6 py-3 text-sm font-semibold text-white shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:bg-pine-deep hover:shadow-card"
-                >
-                  Complete assessment
-
-                  <svg
-                    viewBox="0 0 20 20"
-                    className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m5 10 3 3 7-7" />
-                  </svg>
-                </button>
-              )}
+                      <button
+                        type="button"
+                        onClick={resetAssessment}
+                        className="rounded-2xl border border-white/15 bg-white/5 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10"
+                      >
+                        Run another assessment
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
+          </aside>
         </div>
       </div>
     </section>
