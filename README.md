@@ -28,12 +28,6 @@ The project combines a trained regression model with a modern React frontend, a 
 
 ## Screenshots
 
-### Home
-
-<p align="center">
-  <img src="./screenshots/Home%20Page.png" alt="Mental Health Signal home page" width="100%">
-</p>
-
 ### Sign In
 
 <p align="center">
