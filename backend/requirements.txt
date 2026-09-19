@@ -4,3 +4,9 @@ pydantic
 joblib
 pandas
 scikit-learn==1.6.1
+
+python-dotenv
+pymongo
+PyJWT
+pwdlib[argon2]
+email-validator

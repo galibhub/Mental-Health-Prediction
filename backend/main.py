@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -12,6 +12,11 @@ from database.mongodb import (
     mongodb_lifespan,
     assessment_collection,
 )
+
+from auth.routes import router as auth_router
+from auth.security import get_current_user
+
+from routes.dashboard import router as dashboard_router
 
 
 # =========================================================
@@ -62,11 +67,25 @@ app.add_middleware(
 
 
 # =========================================================
+# ROUTERS
+# =========================================================
+
+app.include_router(auth_router)
+
+app.include_router(dashboard_router)
+
+
+# =========================================================
 # PYDANTIC MODEL
 # =========================================================
 
 class StudentData(BaseModel):
-    age: int = Field(..., ge=10, le=100)
+
+    age: int = Field(
+        ...,
+        ge=10,
+        le=100
+    )
 
     gender: Literal[
         "Male",
@@ -145,6 +164,7 @@ class StudentData(BaseModel):
 # =========================================================
 
 class PredictionResponse(BaseModel):
+
     predicted_mental_health_score: float
 
 
@@ -154,6 +174,7 @@ class PredictionResponse(BaseModel):
 
 @app.get("/")
 def greet():
+
     return {
         "Welcome": "Mental Health Prediction"
     }
@@ -167,7 +188,10 @@ def greet():
     "/predict",
     response_model=PredictionResponse
 )
-async def predict(data: StudentData):
+async def predict(
+    data: StudentData,
+    current_user=Depends(get_current_user)
+):
 
     # -----------------------------------------------------
     # 1. GROUP COUNTRY
@@ -192,11 +216,14 @@ async def predict(data: StudentData):
 
         "Country": data.country,
 
-        "Academic_Level": data.academic_level,
+        "Academic_Level":
+            data.academic_level,
 
-        "Most_Used_Platform": data.most_used_platform,
+        "Most_Used_Platform":
+            data.most_used_platform,
 
-        "Purpose_Of_Use": data.purpose_of_use,
+        "Purpose_Of_Use":
+            data.purpose_of_use,
 
         "Avg_Daily_Usage_Hours":
             data.avg_daily_usage_hours,
@@ -240,15 +267,22 @@ async def predict(data: StudentData):
 
     assessment_document = {
 
-        "created_at": datetime.now(timezone.utc),
+        "user_id":
+            current_user["_id"],
+
+        "created_at":
+            datetime.now(timezone.utc),
 
         "input": {
 
-            "age": data.age,
+            "age":
+                data.age,
 
-            "gender": data.gender,
+            "gender":
+                data.gender,
 
-            "country": data.country,
+            "country":
+                data.country,
 
             "academic_level":
                 data.academic_level,
@@ -289,20 +323,28 @@ async def predict(data: StudentData):
     }
 
 
-    # Insert into MongoDB
+    # -----------------------------------------------------
+    # INSERT INTO MONGODB
+    # -----------------------------------------------------
+
     result = await assessment_collection.insert_one(
         assessment_document
     )
 
 
-    # Optional backend log
+    # -----------------------------------------------------
+    # BACKEND LOG
+    # -----------------------------------------------------
+
     print(
-        f"✅ Assessment saved to MongoDB: {result.inserted_id}"
+        f"✅ Assessment saved to MongoDB: "
+        f"{result.inserted_id} "
+        f"| User: {current_user['_id']}"
     )
 
 
     # -----------------------------------------------------
-    # 5. RETURN SCORE TO FRONTEND
+    # 5. RETURN SCORE
     # -----------------------------------------------------
 
     return PredictionResponse(

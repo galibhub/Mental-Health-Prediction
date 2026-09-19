@@ -1,29 +1,29 @@
 export function getSignal(score) {
-  if (score < 4) {
+  if (score < 5.1) {
     return {
-      key: "attention",
-      label: "Needs attention",
-      title: "There are a few areas worth looking at.",
+      key: "lower",
+      label: "Lower range",
+      title: "Your score falls in the lower model-score range.",
       context:
-        "Your current response pattern falls in a lower model-score range. Small, sustainable changes to your daily routine may be worth considering.",
+        "This prediction is below the 25th percentile of the training target distribution used by the model.",
     };
   }
 
-  if (score < 7) {
+  if (score <= 7.0) {
     return {
-      key: "balanced",
-      label: "Balanced",
-      title: "Your current pattern looks fairly steady.",
+      key: "middle",
+      label: "Middle range",
+      title: "Your score falls in the middle model-score range.",
       context:
-        "Your responses fall in a relatively balanced model-score range, with some room to improve consistency, recovery, or daily balance.",
+        "This prediction falls between the 25th and 75th percentiles of the training target distribution used by the model.",
     };
   }
 
   return {
-    key: "supported",
-    label: "Well supported",
-    title: "Your current pattern looks well supported.",
+    key: "higher",
+    label: "Higher range",
+    title: "Your score falls in the higher model-score range.",
     context:
-      "Your responses fall in a higher model-score range, suggesting several supportive habits in the pattern captured by this model.",
+      "This prediction is above the 75th percentile of the training target distribution used by the model.",
   };
 }
