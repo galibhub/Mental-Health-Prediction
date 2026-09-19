@@ -31,33 +31,32 @@ The project combines a trained regression model with a modern React frontend, a 
 ### Home
 
 <p align="center">
-  <img src="./screenshots/home-page.png" alt="Mental Health Signal home page" width="100%">
+  <img src="./screenshots/Home%20Page.png" alt="Mental Health Signal home page" width="100%">
 </p>
 
 ### Sign In
 
 <p align="center">
-  <img src="./screenshots/sign-in.png" alt="Mental Health Signal sign in page" width="90%">
+  <img src="./screenshots/signIn.png" alt="Mental Health Signal sign in page" width="90%">
 </p>
 
 ### Register
 
 <p align="center">
-  <img src="./screenshots/register-page.png" alt="Mental Health Signal registration page" width="90%">
+  <img src="./screenshots/registerPage.png" alt="Mental Health Signal registration page" width="90%">
 </p>
 
 ### Assessment — Live Result Panel
 
 <p align="center">
-  <img src="./screenshots/assessment-live.png" alt="Mental Health Signal assessment interface with live result panel" width="100%">
+  <img src="./screenshots/prediction2.png" alt="Mental Health Signal assessment interface with live result panel" width="100%">
 </p>
 
 ### Assessment — Result Presentation
 
 <p align="center">
-  <img src="./screenshots/assessment-result.png" alt="Mental Health Signal assessment result presentation" width="100%">
+  <img src="./screenshots/prediction.png" alt="Mental Health Signal assessment result presentation" width="100%">
 </p>
-
 ## How It Works
 
 ```text
