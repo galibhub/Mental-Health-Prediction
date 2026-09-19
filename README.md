@@ -3,7 +3,7 @@
 > A machine-learning powered student wellness exploration platform that turns everyday habits, digital behavior, lifestyle patterns, and perceived stress into an informational mental health score.
 
 <p align="center">
-  <img src="./screenshots/home-page.png" alt="Mental Health Signal home page" width="100%" />
+  <img src="./screenshots/home-page.png" alt="Mental Health Signal home page" width="100%">
 </p>
 
 ## Overview
@@ -31,40 +31,32 @@ The project combines a trained regression model with a modern React frontend, a 
 ### Home
 
 <p align="center">
-  <img src="./screenshots/home-page.png" alt="Mental Health Signal home page" width="100%" />
+  <img src="./screenshots/home-page.png" alt="Mental Health Signal home page" width="100%">
 </p>
 
-### Authentication
+### Sign In
 
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <strong>Sign in</strong><br /><br />
-      <img src="./screenshots/sign-in.png" alt="Mental Health Signal sign in page" width="100%" />
-    </td>
-    <td width="50%" align="center">
-      <strong>Register</strong><br /><br />
-      <img src="./screenshots/register-page.png" alt="Mental Health Signal registration page" width="100%" />
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="./screenshots/sign-in.png" alt="Mental Health Signal sign in page" width="90%">
+</p>
 
-### Assessment Experience
+### Register
 
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <strong>Assessment with live result</strong><br /><br />
-      <img src="./screenshots/assessment-live.png" alt="Mental Health Signal assessment interface with live result panel" width="100%" />
-    </td>
-    <td width="50%" align="center">
-      <strong>Assessment result presentation</strong><br /><br />
-      <img src="./screenshots/assessment-result.png" alt="Mental Health Signal assessment result presentation" width="100%" />
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="./screenshots/register-page.png" alt="Mental Health Signal registration page" width="90%">
+</p>
 
-> **Repository note:** Keep the `screenshots/` folder in the repository beside this `README.md` file. GitHub resolves these relative image paths from the README location.
+### Assessment — Live Result Panel
+
+<p align="center">
+  <img src="./screenshots/assessment-live.png" alt="Mental Health Signal assessment interface with live result panel" width="100%">
+</p>
+
+### Assessment — Result Presentation
+
+<p align="center">
+  <img src="./screenshots/assessment-result.png" alt="Mental Health Signal assessment result presentation" width="100%">
+</p>
 
 ## How It Works
 
@@ -113,7 +105,7 @@ User
 ### Data & Authentication
 
 - MongoDB Atlas
-- PyMongo AsyncMongoClient
+- PyMongo `AsyncMongoClient`
 - JWT / PyJWT
 - `pwdlib` with Argon2 password hashing
 
@@ -121,7 +113,7 @@ User
 
 The application uses a trained **Random Forest Regressor** pipeline to predict the `Mental_Health_Score` from student profile, digital behavior, academic routine, lifestyle, and perceived-stress inputs.
 
-### Reported test metrics
+### Reported Test Metrics
 
 | Metric | Default Random Forest | Tuned Random Forest |
 |---|---:|---:|
@@ -193,9 +185,7 @@ Protected endpoints include:
 
 Interactive API documentation is available at:
 
-```text
-http://127.0.0.1:8000/docs
-```
+`http://127.0.0.1:8000/docs`
 
 ## Project Structure
 
@@ -234,19 +224,26 @@ Mental Health Prediction/
 │   ├── package.json
 │   └── vite.config.js
 │
+├── screenshots/
+│   ├── home-page.png
+│   ├── sign-in.png
+│   ├── register-page.png
+│   ├── assessment-live.png
+│   └── assessment-result.png
+│
 └── README.md
 ```
 
 ## Local Setup
 
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/galibhub/Mental-Health-Prediction.git
 cd Mental-Health-Prediction
 ```
 
-### 2. Backend setup
+### 2. Backend Setup
 
 ```bash
 cd backend
@@ -260,7 +257,6 @@ Create `backend/.env`:
 ```env
 MONGODB_URI=your_mongodb_atlas_connection_string
 MONGODB_DATABASE=mental_health_db
-
 JWT_SECRET_KEY=your_long_random_secret
 JWT_ALGORITHM=HS256
 JWT_EXPIRE_MINUTES=10080
@@ -284,7 +280,7 @@ Swagger:
 http://127.0.0.1:8000/docs
 ```
 
-### 3. Frontend setup
+### 3. Frontend Setup
 
 Open a second terminal:
 
