@@ -3,7 +3,7 @@
 > A machine-learning powered student wellness exploration platform that turns everyday habits, digital behavior, lifestyle patterns, and perceived stress into an informational mental health score.
 
 <p align="center">
-  <img src="screenshots/home-page.png" alt="Mental Health Signal home page" width="100%" />
+  <img src="./screenshots/home-page.png" alt="Mental Health Signal home page" width="100%" />
 </p>
 
 ## Overview
@@ -31,32 +31,40 @@ The project combines a trained regression model with a modern React frontend, a 
 ### Home
 
 <p align="center">
-  <img src="screenshots/home-page.png" alt="Mental Health Signal home page" width="100%" />
+  <img src="./screenshots/home-page.png" alt="Mental Health Signal home page" width="100%" />
 </p>
 
-### Sign in
+### Authentication
 
-<p align="center">
-  <img src="screenshots/sign-in.png" alt="Mental Health Signal sign in page" width="90%" />
-</p>
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <strong>Sign in</strong><br /><br />
+      <img src="./screenshots/sign-in.png" alt="Mental Health Signal sign in page" width="100%" />
+    </td>
+    <td width="50%" align="center">
+      <strong>Register</strong><br /><br />
+      <img src="./screenshots/register-page.png" alt="Mental Health Signal registration page" width="100%" />
+    </td>
+  </tr>
+</table>
 
-### Register
+### Assessment Experience
 
-<p align="center">
-  <img src="screenshots/register-page.png" alt="Mental Health Signal registration page" width="90%" />
-</p>
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <strong>Assessment with live result</strong><br /><br />
+      <img src="./screenshots/assessment-live.png" alt="Mental Health Signal assessment interface with live result panel" width="100%" />
+    </td>
+    <td width="50%" align="center">
+      <strong>Assessment result presentation</strong><br /><br />
+      <img src="./screenshots/assessment-result.png" alt="Mental Health Signal assessment result presentation" width="100%" />
+    </td>
+  </tr>
+</table>
 
-### Assessment — live result panel
-
-<p align="center">
-  <img src="screenshots/assessment-live.png" alt="Mental Health Signal assessment interface with live result panel" width="100%" />
-</p>
-
-### Assessment — result presentation
-
-<p align="center">
-  <img src="screenshots/assessment-result.png" alt="Mental Health Signal assessment result presentation" width="100%" />
-</p>
+> **Repository note:** Keep the `screenshots/` folder in the repository beside this `README.md` file. GitHub resolves these relative image paths from the README location.
 
 ## How It Works
 
